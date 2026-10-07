@@ -1,4 +1,5 @@
 import joblib
+from contextlib import asynccontextmanager
 import pandas as pd
 from fastapi import FastAPI
 from pydantic import BaseModel,Field
@@ -6,7 +7,13 @@ from typing import Literal
 model=joblib.load("Mental_Health_model_2.pkl")
 from fastapi.middleware.cors import CORSMiddleware
 
-app=FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global model
+    # Load model during startup
+    model = joblib.load("Mental_Health_model_2.pkl")
+    yield
+app=FastAPI(lifespan=lifespan)
 
 class StudentData(BaseModel):
     age                     : int = Field(..., ge=10, le=100)
